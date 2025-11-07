@@ -156,16 +156,33 @@ The `docker/` subdirectory isolates build files from server data:
 
 ### Ports
 
-Default ports exposed:
-- `25565` - Minecraft server
-- `25575` - RCON (remote console, optional)
+Default configuration:
+- `25565` - Minecraft server (exposed)
+- `25575` - RCON remote console (**disabled by default** for security)
 
-To change ports, edit `docker-compose.yml`:
-```yaml
-ports:
-  - "25565:25565"  # Format: "host_port:container_port"
-  - "25575:25575"
-```
+#### Enabling RCON
+
+RCON (Remote Console) is disabled by default as it can be a security risk if exposed unintentionally.
+
+**To enable RCON:**
+
+1. Uncomment the RCON port in `docker-compose.yml`:
+   ```yaml
+   ports:
+     - "25565:25565"
+     - "25575:25575"  # Uncomment this line
+   ```
+
+2. Configure RCON in `server.properties`:
+   ```properties
+   enable-rcon=true
+   rcon.port=25575
+   rcon.password=your-secure-password-here
+   ```
+
+3. Restart: `docker-compose restart`
+
+**Security Warning**: Only expose RCON if you need it, and always use a strong password. Consider using SSH tunneling instead of exposing RCON publicly.
 
 ### Server JAR Auto-Detection
 
@@ -176,6 +193,63 @@ The startup script automatically finds your server JAR in this priority order:
 4. First `*.jar` file found
 
 **No manual configuration needed!** Just drop your JAR in the root directory.
+
+### File Permissions and Volume Mounts
+
+The container runs as user `minecraft` (UID 1000, GID 1000) for security. Since the current directory is mounted as a volume, file permissions are inherited from your host system.
+
+#### Permission Requirements
+
+Files in the mounted directory must be **readable by UID 1000**. There are three approaches:
+
+**Option 1: Match Host User to Container (Recommended)**
+
+If your host user is already UID 1000, no action needed:
+```bash
+id -u  # Check your UID
+# If 1000, you're good!
+```
+
+**Option 2: Fix Permissions on Host**
+
+Make files readable/writable by UID 1000:
+```bash
+# Change ownership (if you have sudo)
+sudo chown -R 1000:1000 .
+
+# Or make files world-readable (less secure)
+chmod -R 755 .
+```
+
+**Option 3: Run Container as Your Host User**
+
+Add to `docker-compose.yml`:
+```yaml
+services:
+  minecraft:
+    user: "${UID}:${GID}"  # Runs as your host user
+    # ... rest of config
+```
+
+Then start with:
+```bash
+UID=$(id -u) GID=$(id -g) docker-compose up -d
+```
+
+#### Troubleshooting Permission Errors
+
+If you see permission denied errors:
+```bash
+# Check file ownership
+ls -la
+
+# Fix ownership
+sudo chown -R 1000:1000 .
+
+# Or run as your user (Option 3 above)
+```
+
+**Note**: The Dockerfile intentionally does NOT include `chown` commands because volume mounts override image layers. Permissions must be handled on the host or via runtime configuration.
 
 ## JVM Optimization - Aikar's Flags
 
