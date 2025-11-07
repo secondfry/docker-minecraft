@@ -17,17 +17,22 @@ services:
       - "25565:25565"  # Minecraft server port
       - "25575:25575"  # RCON port (optional)
 
-    # Environment variables (optional, can be customized)
+    # Environment variables
     environment:
       - TZ=UTC
+      # Optional: Override automatic RAM detection
+      # Uncomment to manually set heap size (in GB, without 'G' suffix)
+      # - MEMORY_GB=6
 
     # Resource limits (adjust based on your system)
+    # The container will auto-detect available RAM and leave overhead for OS
+    # Set these limits based on your host's available memory
     deploy:
       resources:
         limits:
-          memory: 8G  # Slightly higher than -Xmx to allow for overhead
+          memory: 8G  # Maximum RAM container can use
         reservations:
-          memory: 6G
+          memory: 6G  # Minimum RAM to reserve
 
     # stdin_open and tty for interactive console (optional)
     stdin_open: true
