@@ -4,6 +4,68 @@ Dockerized Minecraft server with **automatic RAM detection** and Aikar's optimiz
 
 Features Eclipse Temurin 21 JRE on Alpine Linux with intelligent memory management.
 
+## Why This Exists
+
+Most Minecraft Docker solutions require manual memory configuration:
+
+```bash
+# itzg/docker-minecraft-server
+docker run -e MEMORY=8G ...
+
+# marctv/minecraft-papermc-server
+docker run -e MAX_RAM=8G ...
+```
+
+**But how do you calculate the right value?** Too little causes crashes. Too much causes garbage collection lag.
+
+**secondfry/docker-minecraft** solves this through:
+
+- ✅ **Automatic RAM detection** - reads system memory, calculates optimal heap
+- ✅ **Intelligent overhead** - reserves 1-2GB for OS based on total RAM
+- ✅ **Smart capping** - limits heap at 12GB (following Aikar's research)
+- ✅ **Adaptive GC tuning** - adjusts G1GC parameters based on allocated heap size
+- ✅ **Trivial migration** - copy existing servers without file preservation
+
+Just run `docker-compose up -d` and it works.
+
+## Comparison with Alternatives
+
+| Feature | **secondfry** | itzg | marctv | Pterodactyl |
+|---------|---------------|------|--------|-------------|
+| **RAM Configuration** | ✅ Automatic | ❌ Manual | ❌ Manual | ❌ Web UI |
+| **GC Tuning** | ✅ Adaptive | ❌ Static | ❌ Static | ❌ Static |
+| **Server Migration** | ✅ Trivial | ⚠️ Complex | ⚠️ Manual | ⚠️ Import |
+| **Image Size** | 100MB Alpine | 793MB Ubuntu | 200MB | N/A |
+| **Setup Complexity** | 3 commands | Moderate | Simple | Complex |
+| **Auto Downloads** | ❌ Manual JAR | ✅ Auto | ✅ Auto | ✅ Auto |
+| **Web Interface** | ❌ None | ❌ None | ❌ None | ✅ Full UI |
+| **Best For** | Dev UX | Features | ARM/Pi | Enterprise |
+
+### When to Use Alternatives
+
+**Use [itzg/docker-minecraft-server](https://github.com/itzg/docker-minecraft-server) if you need:**
+- Automatic mod/plugin downloads
+- 100+ configuration options
+- Multi-version server management
+- Established community (10k+ stars)
+
+**Use [Pterodactyl](https://pterodactyl.io/) if you need:**
+- Multi-server management
+- User access controls
+- Web-based administration
+- Enterprise features
+
+**Use [marctv/minecraft-papermc-server](https://github.com/marctv/minecraft-papermc-server) if you:**
+- Only run PaperMC servers
+- Prefer simplicity over flexibility
+- Run on ARM/Raspberry Pi
+
+**Use secondfry/docker-minecraft if you value:**
+- Zero-configuration memory optimization
+- Clean architecture and minimal footprint
+- Easy migration of existing servers
+- Smart defaults over config files
+
 ## Prerequisites
 
 - Docker and Docker Compose ([installation instructions](https://docs.docker.com/engine/install/))
