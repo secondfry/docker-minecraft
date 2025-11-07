@@ -6,7 +6,7 @@ Features Eclipse Temurin 21 JRE on Alpine Linux with intelligent memory manageme
 
 ## Prerequisites
 
-- Docker and Docker Compose
+- Docker and Docker Compose ([installation instructions](https://docs.docker.com/engine/install/))
 - Your Minecraft server JAR file (Fabric, Paper, Vanilla, etc.)
 - Minimum 6GB RAM recommended (8GB+ preferred)
 
