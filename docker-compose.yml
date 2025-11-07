@@ -32,6 +32,10 @@ services:
       # Optional: Override automatic RAM detection
       # Uncomment to manually set heap size (in GB, without 'G' suffix)
       # - MEMORY_GB=${MEMORY_GB:-6}
+      # Optional: Override maximum heap size cap (default: 12GB)
+      # Aikar recommends 6-10GB, rarely beneficial above 12GB
+      # Increase only for heavy modpacks that require more RAM
+      # - MAX_MEMORY_GB=${MAX_MEMORY_GB:-16}
 
     # Resource limits (OPTIONAL - commented out by default)
     #

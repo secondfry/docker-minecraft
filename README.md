@@ -94,13 +94,15 @@ Features Eclipse Temurin 21 JRE on Alpine Linux with intelligent memory manageme
 
 The server **automatically detects available RAM** and configures JVM heap size with proper overhead:
 
-| Total RAM | Heap Allocation | OS Overhead |
-|-----------|-----------------|-------------|
-| 6-7 GB    | Total - 1 GB    | 1 GB        |
-| 8-15 GB   | Total - 2 GB    | 2 GB        |
-| 16+ GB    | Total - 2 GB    | 2 GB        |
+| Total RAM | Heap Allocation | OS Overhead | Notes |
+|-----------|-----------------|-------------|-------|
+| 6-7 GB    | Total - 1 GB    | 1 GB        | Minimum viable |
+| 8-15 GB   | Total - 2 GB    | 2 GB        | Recommended |
+| 16+ GB    | Total - 2 GB    | 2 GB        | **Capped at 12GB** |
 
-**Example**: On an 8GB system, the server allocates 6GB to Java and leaves 2GB for the OS.
+**Example**: On an 8GB system → 6GB heap. On a 32GB system → 12GB heap (capped).
+
+**Why the 12GB cap?** Aikar recommends 6-10GB for most servers. Research shows that allocating more than 12GB rarely improves performance and can cause severe garbage collection pauses (2-5 second freezes). See the [official Aikar's flags documentation](https://docs.papermc.io/paper/aikars-flags) for details.
 
 ### Manual Override
 
@@ -115,7 +117,7 @@ cp .env.example .env
 Edit `.env` and uncomment/set `MEMORY_GB`:
 
 ```bash
-MEMORY_GB=6
+MEMORY_GB=6  # Force specific heap size
 TZ=UTC
 ```
 
@@ -130,29 +132,27 @@ Edit `docker-compose.yml` and uncomment the `MEMORY_GB` line:
 ```yaml
 environment:
   - TZ=UTC
-  - MEMORY_GB=6  # Heap size in GB (without 'G' suffix)
+  - MEMORY_GB=6  # Force specific heap size (in GB, without 'G' suffix)
 ```
 
 Then restart: `docker-compose up -d`
 
-#### Option 3: Edit secondfry-start.sh (Persistent)
+#### Option 3: Override Maximum Cap (Heavy Modpacks)
 
-If you upgrade your server's RAM later, edit `secondfry-start.sh` lines 26-28:
+If you have a **heavily modded server** that genuinely needs more than 12GB, you can override the cap:
 
-```bash
-if [ -n "$MEMORY_GB" ]; then
-    HEAP_SIZE="${MEMORY_GB}G"
-    echo "Using manually configured memory: ${HEAP_SIZE}"
+```yaml
+environment:
+  - TZ=UTC
+  - MAX_MEMORY_GB=16  # Increase cap from 12GB to 16GB
 ```
 
-Change to:
+Or in `.env`:
 ```bash
-if [ -n "$MEMORY_GB" ]; then
-    HEAP_SIZE="10G"  # Your desired heap size
-    echo "Using manually configured memory: ${HEAP_SIZE}"
+MAX_MEMORY_GB=16
 ```
 
-**Important**: Always leave 1-2GB overhead! For 16GB total RAM, use 14GB heap maximum.
+**Warning**: Only increase this if you have a specific need (e.g., 200+ mods). Aikar recommends 6-10GB for most servers. Over-allocation causes performance issues, not improvements.
 
 ### Docker Memory Limits (Optional)
 
