@@ -18,9 +18,9 @@ Place all your Minecraft server files in this directory:
 
 The `start.sh` script is **NOT stored in this directory**. It's automatically injected at runtime by Docker from the repository root. This means:
 
-✅ **Safe to destructively copy**: `cp -a /old/server/. .` - No problem! (includes hidden files)
-✅ **Safe to move**: `shopt -s dotglob && mv /old/server/* .` - Works perfectly!
-✅ **Safe to extract**: `tar -xzf backup.tar.gz -C .` - Go ahead!
+✅ **Safe to copy contents**: `cp -a /old/server/. .` - Includes hidden files!
+✅ **Safe to move directory**: `rm -rf ../server && mv /old/server ../server` - Works perfectly!
+✅ **Safe to extract tarball**: `tar -xzf backup.tar.gz -C .` - Go ahead!
 
 The startup script will always be available and up-to-date.
 
@@ -47,9 +47,6 @@ The startup script will always be available and up-to-date.
    ```bash
    # Copy contents including hidden files
    cp -a /path/to/old/server/. .
-
-   # Or move contents including hidden files
-   shopt -s dotglob && mv /path/to/old/server/* . && shopt -u dotglob
    ```
 
 2. Start the server (from project root):
@@ -62,7 +59,9 @@ The startup script will always be available and up-to-date.
 
 1. Extract directly here:
    ```bash
-   tar -xzf /path/to/server-backup.tar.gz -C .
+   # Move tarball to repo root, then extract
+   mv /path/to/server-backup.tar.gz ../
+   tar -xzf ../server-backup.tar.gz -C .
    ```
 
 2. Start the server (from project root):
