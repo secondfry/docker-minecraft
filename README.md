@@ -78,20 +78,40 @@ if [ -n "$MEMORY_GB" ]; then
 
 **Important**: Always leave 1-2GB overhead! For 16GB total RAM, use 14GB heap maximum.
 
-### Docker Memory Limits
+### Docker Memory Limits (Optional)
 
-Set container memory limits in `docker-compose.yml`:
+**By default, Docker containers can use ALL host RAM** without limits. This is the recommended configuration for dedicated Minecraft servers, as the startup script will automatically detect all available RAM and configure itself optimally.
+
+The memory limits in `docker-compose.yml` are **commented out by default**.
+
+#### When to Use Memory Limits
+
+Only uncomment and set memory limits if you need to:
+1. **Multi-tenant hosts** - Prevent one container from using all RAM and starving other services
+2. **Shared hosting** - Enforce resource quotas per customer/container
+3. **Testing** - Simulate lower-memory environments
+
+#### How Docker Memory Works
 
 ```yaml
-deploy:
-  resources:
-    limits:
-      memory: 8G   # Maximum container can use
-    reservations:
-      memory: 6G   # Minimum to reserve
+# Uncomment to enable limits:
+# deploy:
+#   resources:
+#     limits:
+#       memory: 8G   # Hard limit - container killed if exceeded
+#     reservations:
+#       memory: 6G   # Soft limit - guaranteed minimum
 ```
 
-**Recommendation**: Set `limits.memory` to your host's total available RAM. The startup script will automatically calculate the appropriate heap size within that limit.
+**Important**: If you set a memory limit, the auto-detection script will detect ONLY that limit, not the host's total RAM.
+
+**Example**:
+- Host has 16GB RAM
+- Set `memory: 8G` limit
+- Script detects 8GB and allocates ~6GB heap (leaving 2GB overhead)
+- Container cannot use the other 8GB even though it's available on the host
+
+**Recommendation**: Leave limits commented out unless you have a specific need.
 
 ## Project Structure
 

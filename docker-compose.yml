@@ -24,15 +24,26 @@ services:
       # Uncomment to manually set heap size (in GB, without 'G' suffix)
       # - MEMORY_GB=6
 
-    # Resource limits (adjust based on your system)
-    # The container will auto-detect available RAM and leave overhead for OS
-    # Set these limits based on your host's available memory
-    deploy:
-      resources:
-        limits:
-          memory: 8G  # Maximum RAM container can use
-        reservations:
-          memory: 6G  # Minimum RAM to reserve
+    # Resource limits (OPTIONAL - commented out by default)
+    #
+    # By default, Docker containers can use ALL host RAM without limits.
+    # The startup script auto-detects available RAM from the host/container.
+    #
+    # Use cases for setting memory limits:
+    # 1. Multi-tenant hosts - prevent one container from starving others
+    # 2. Shared hosting - enforce resource quotas per customer
+    # 3. Testing - simulate lower-memory environments
+    #
+    # NOTE: If you set a limit, the auto-detection will see ONLY that limit,
+    # not the host's total RAM. For example, with "memory: 8G", the script
+    # detects 8G and allocates ~6G heap (leaving 2G overhead).
+    #
+    # deploy:
+    #   resources:
+    #     limits:
+    #       memory: 8G  # Maximum RAM container can use
+    #     reservations:
+    #       memory: 6G  # Minimum RAM to guarantee
 
     # stdin_open and tty for interactive console (optional)
     stdin_open: true
