@@ -19,7 +19,9 @@ services:
     # Expose Minecraft ports
     ports:
       - "25565:25565"  # Minecraft server port
-      - "25575:25575"  # RCON port (optional)
+      # RCON port (disabled by default for security)
+      # Uncomment only if you need remote console access:
+      # - "25575:25575"
 
     # Environment variables
     # Best practice: Use .env file for configuration (see .env.example)

@@ -25,17 +25,16 @@ RUN addgroup -g 1000 minecraft \
 # Set working directory
 WORKDIR /server
 
-# Change ownership to minecraft user
-RUN chown -R minecraft:minecraft /server
-
 # Switch to non-root user
+# Note: Volume mounts override image layers, so we don't chown here.
+# Host files must be readable by UID 1000 or use an entrypoint to fix permissions.
 USER minecraft
 
 # Expose Minecraft server port
 EXPOSE 25565
 
-# Expose RCON port (optional remote console)
-EXPOSE 25575
+# Note: RCON port (25575) not exposed by default for security
+# Uncomment in docker-compose.yml only if you need remote console access
 
 # Set default command
 CMD ["bash", "/server/start.sh"]
