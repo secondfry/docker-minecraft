@@ -3,7 +3,7 @@ version: '3.8'
 services:
   minecraft:
     build:
-      context: .
+      context: ./docker
       dockerfile: Dockerfile
     container_name: minecraft-server
     restart: unless-stopped
