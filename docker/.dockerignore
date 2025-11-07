@@ -33,3 +33,8 @@ logs/
 *.bak
 *.backup
 backups/
+
+# Environment files (may contain configuration)
+.env
+.env.*
+!.env.example

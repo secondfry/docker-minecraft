@@ -5,13 +5,16 @@
 FROM eclipse-temurin:21-jre-alpine
 
 # Metadata labels following OCI image spec
-LABEL org.opencontainers.image.title="Minecraft Server"
-LABEL org.opencontainers.image.description="Dockerized Minecraft server with automatic RAM detection and Aikar's flags"
-LABEL org.opencontainers.image.vendor="docker-minecraft"
-LABEL org.opencontainers.image.licenses="MIT"
+# See: https://github.com/opencontainers/image-spec/blob/main/annotations.md
+LABEL org.opencontainers.image.title="Minecraft Server" \
+      org.opencontainers.image.description="Dockerized Minecraft server with automatic RAM detection and Aikar's flags" \
+      org.opencontainers.image.vendor="docker-minecraft" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.source="https://github.com/secondfry/docker-minecraft" \
+      org.opencontainers.image.documentation="https://github.com/secondfry/docker-minecraft/blob/main/README.md"
 
 # Install runtime dependencies
-# Combining into single layer for optimization
+# Sorted alphabetically per Docker best practices for easier maintenance
 RUN apk add --no-cache \
     bash \
     curl \
@@ -39,6 +42,10 @@ EXPOSE 25565
 # Set default command
 CMD ["bash", "/server/start.sh"]
 
+# Signal handling for graceful shutdown
+STOPSIGNAL SIGTERM
+
 # Healthcheck (can be overridden in docker-compose.yml)
+# Uses bash's built-in /dev/tcp for port checking (no netcat needed)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-    CMD nc -z localhost 25565 || exit 1
+    CMD timeout 5 bash -c '</dev/tcp/localhost/25565' || exit 1
