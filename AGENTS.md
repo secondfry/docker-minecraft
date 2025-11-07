@@ -109,7 +109,7 @@ The 'localhost/' prefix ensures Docker only uses locally built images.
 │   ├── Dockerfile
 │   └── .dockerignore
 ├── server/          # Server data (not in build context)
-└── start.sh         # Overlayed at runtime
+└── secondfry-start.sh         # Overlayed at runtime
 ```
 
 **Why**:
@@ -121,16 +121,16 @@ The 'localhost/' prefix ensures Docker only uses locally built images.
 
 **Problem**: Users need to migrate existing servers safely.
 
-**Solution**: Overlay `start.sh` at runtime via volume mount:
+**Solution**: Overlay `secondfry-start.sh` at runtime via volume mount:
 ```yaml
 volumes:
   - ./server:/server
-  - ./start.sh:/server/start.sh:ro
+  - ./secondfry-start.sh:/server/secondfry-start.sh:ro
 ```
 
 **Why**:
 - Users can destructively copy/move entire server directories
-- start.sh always up-to-date from repository
+- secondfry-start.sh always up-to-date from repository
 - No need to preserve files when migrating
 
 ## User Experience Learnings
@@ -248,7 +248,7 @@ fi
 - Easy to migrate existing servers
 - Entire directory is gitignored except README
 
-### Why overlay start.sh?
+### Why overlay secondfry-start.sh?
 
 **Problem solved**: Users accidentally overwriting startup script when migrating servers.
 
@@ -281,7 +281,7 @@ fi
 - ✅ Container builds successfully
 - ✅ No registry pull attempts
 - ✅ Volume mounts work correctly
-- ✅ start.sh overlay works
+- ✅ secondfry-start.sh overlay works
 - ✅ Healthcheck uses bash built-in (no netcat)
 
 **What should be tested by users**:

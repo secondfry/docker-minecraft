@@ -11,9 +11,9 @@ Place all your Minecraft server files in this directory:
 - ✅ Mods and plugins (`mods/`, `plugins/`)
 - ✅ Any other server files
 
-## Important: start.sh is Auto-Injected
+## Important: secondfry-start.sh is Auto-Injected
 
-The `start.sh` script is **NOT stored in this directory**. It's automatically injected at runtime by Docker from the repository root.
+The `secondfry-start.sh` script is **NOT stored in this directory**. It's automatically injected at runtime by Docker from the repository root.
 
 **This means you can safely copy/move your entire server here without worrying about overwriting anything!**
 

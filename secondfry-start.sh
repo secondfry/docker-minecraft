@@ -6,6 +6,20 @@
 
 set -e
 
+echo "=========================================="
+echo "Using secondfry-start.sh startup script"
+echo "This is NOT part of the original server distribution"
+echo "=========================================="
+echo ""
+
+# Check if server has its own start.sh and warn user
+if [ -f /server/start.sh ] && [ "$(realpath /server/start.sh)" != "$(realpath "$0")" ]; then
+    echo "⚠️  WARNING: Your server directory contains its own start.sh file"
+    echo "⚠️  We are using secondfry-start.sh instead of your server's start.sh"
+    echo "⚠️  If you want to use the original start.sh, please modify docker-compose.yml"
+    echo ""
+fi
+
 # Accept EULA on first run if not already accepted
 if [ ! -f eula.txt ]; then
     echo "eula=true" > eula.txt

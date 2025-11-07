@@ -40,7 +40,7 @@ EXPOSE 25565
 # Uncomment in docker-compose.yml only if you need remote console access
 
 # Set default command
-CMD ["bash", "/server/start.sh"]
+CMD ["bash", "/server/secondfry-start.sh"]
 
 # Signal handling for graceful shutdown
 STOPSIGNAL SIGTERM

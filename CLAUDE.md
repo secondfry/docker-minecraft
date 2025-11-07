@@ -23,14 +23,14 @@ This is a Docker Compose setup for Minecraft servers with:
 
 - `docker/Dockerfile` - Alpine-based Temurin 21 JRE image
 - `docker-compose.yml` - Service orchestration (note: no `image:` field - security)
-- `start.sh` - Startup script overlayed at runtime (NOT in server/ directory)
+- `secondfry-start.sh` - Startup script overlayed at runtime (NOT in server/ directory)
 - `server/` - User's Minecraft files go here (gitignored except README)
 
 ## Critical: Security
 
 1. **No image: field in docker-compose.yml** - Prevents supply chain attacks (see AGENTS.md)
 2. **RCON disabled by default** - Remote console is security risk
-3. **Volume overlays** - Users can safely overwrite server/ without breaking start.sh
+3. **Volume overlays** - Users can safely overwrite server/ without breaking secondfry-start.sh
 
 ## User Workflows
 
