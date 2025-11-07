@@ -11,12 +11,12 @@ services:
     container_name: minecraft-server
     restart: unless-stopped
 
-    # Mount server directory and overlay start.sh
+    # Mount server directory and overlay secondfry-start.sh
     # Place your Minecraft server files in ./server/ directory
-    # start.sh is automatically injected at runtime (no need to preserve it)
+    # secondfry-start.sh is automatically injected at runtime (no need to preserve it)
     volumes:
       - ./server:/server
-      - ./start.sh:/server/start.sh:ro
+      - ./secondfry-start.sh:/server/secondfry-start.sh:ro
 
     # Expose Minecraft ports
     ports:

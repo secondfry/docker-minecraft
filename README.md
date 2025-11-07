@@ -86,7 +86,7 @@ Features Eclipse Temurin 21 JRE on Alpine Linux with intelligent memory manageme
 
 **That's it!** The server automatically detects available RAM and configures itself with Aikar's optimized flags.
 
-**Note**: The `start.sh` script is automatically injected into the server at runtime. You never need to worry about preserving it when copying or extracting server files - it's always provided fresh from the repository!
+**Note**: The `secondfry-start.sh` script is automatically injected into the server at runtime. You never need to worry about preserving it when copying or extracting server files - it's always provided fresh from the repository!
 
 ## Memory Management
 
@@ -135,9 +135,9 @@ environment:
 
 Then restart: `docker-compose up -d`
 
-#### Option 3: Edit start.sh (Persistent)
+#### Option 3: Edit secondfry-start.sh (Persistent)
 
-If you upgrade your server's RAM later, edit `start.sh` lines 26-28:
+If you upgrade your server's RAM later, edit `secondfry-start.sh` lines 26-28:
 
 ```bash
 if [ -n "$MEMORY_GB" ]; then
@@ -203,7 +203,7 @@ Only uncomment and set memory limits if you need to:
 │   ├── plugins/            # Your plugins (if using Paper/Spigot)
 │   ├── server.properties   # Server config (generated)
 │   └── ...                 # All other server files
-├── start.sh                # Startup script (auto-injected into container)
+├── secondfry-start.sh      # Startup script (auto-injected into container)
 ├── docker-compose.yml      # Service orchestration
 ├── .env.example            # Environment variable template
 └── README.md               # This file
@@ -217,7 +217,7 @@ Only uncomment and set memory limits if you need to:
   - Easy to backup: just tar the `server/` directory
   - Easy to migrate: copy/move existing servers without worry
 
-- **`start.sh` overlay**: Automatically injected at runtime
+- **`secondfry-start.sh` overlay**: Automatically injected at runtime
   - Stored at repository root, not in server/
   - Never gets overwritten by your server files
   - Always up-to-date from repository
@@ -394,7 +394,7 @@ docker-compose logs | grep "Detected"
 
 ### Changing Java Flags
 
-If you need to customize JVM flags beyond Aikar's recommendations, edit `start.sh` lines 103-128.
+If you need to customize JVM flags beyond Aikar's recommendations, edit `secondfry-start.sh` lines 103-128.
 
 **Warning**: Only modify if you understand JVM tuning. Aikar's flags are optimal for 99% of servers.
 
@@ -446,7 +446,7 @@ docker-compose logs
 **Common issues:**
 - No JAR file found → Place server JAR in root directory
 - Port already in use → Change port in `docker-compose.yml`
-- Permission denied → Run `chmod +x start.sh`
+- Permission denied → Run `chmod +x secondfry-start.sh`
 
 ### Out of Memory Errors
 
