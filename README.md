@@ -48,10 +48,11 @@ Features Eclipse Temurin 21 JRE on Alpine Linux with intelligent memory manageme
    cd docker-minecraft
    ```
 
-2. **Move your existing server** into the `server/` directory:
+2. **Copy or move your existing server** into the `server/` directory:
    ```bash
+   cp -a /path/to/your/existing/server/* server/
+   # or
    mv /path/to/your/existing/server/* server/
-   # The server/ directory already contains start.sh - keep it!
    ```
 
 3. **Start the server**:
@@ -70,7 +71,6 @@ Features Eclipse Temurin 21 JRE on Alpine Linux with intelligent memory manageme
 2. **Extract your server tarball** into the `server/` directory:
    ```bash
    tar -xzf /path/to/server-backup.tar.gz -C server/
-   # Ensure start.sh exists (provided by repo)
    ```
 
 3. **Start the server**:
@@ -81,6 +81,8 @@ Features Eclipse Temurin 21 JRE on Alpine Linux with intelligent memory manageme
 ---
 
 **That's it!** The server automatically detects available RAM and configures itself with Aikar's optimized flags.
+
+**Note**: The `start.sh` script is automatically injected into the server at runtime. You never need to worry about preserving it when copying or extracting server files - it's always provided fresh from the repository!
 
 ## Memory Management
 
@@ -191,13 +193,13 @@ Only uncomment and set memory limits if you need to:
 │   ├── Dockerfile          # Container image definition
 │   └── .dockerignore       # Files to exclude from build
 ├── server/                  # YOUR MINECRAFT SERVER GOES HERE
-│   ├── start.sh            # Startup script (auto-detects RAM & JAR)
 │   ├── *.jar               # Your server JAR (place here)
 │   ├── world/              # World data (generated)
 │   ├── mods/               # Your mods (if using Fabric/Forge)
 │   ├── plugins/            # Your plugins (if using Paper/Spigot)
 │   ├── server.properties   # Server config (generated)
 │   └── ...                 # All other server files
+├── start.sh                # Startup script (auto-injected into container)
 ├── docker-compose.yml      # Service orchestration
 ├── .env.example            # Environment variable template
 └── README.md               # This file
@@ -209,14 +211,20 @@ Only uncomment and set memory limits if you need to:
   - Easy to understand: "put your server here"
   - Clean separation from Docker infrastructure
   - Easy to backup: just tar the `server/` directory
-  - Easy to migrate: move existing servers right in
+  - Easy to migrate: copy/move existing servers without worry
+
+- **`start.sh` overlay**: Automatically injected at runtime
+  - Stored at repository root, not in server/
+  - Never gets overwritten by your server files
+  - Always up-to-date from repository
+  - You can destructively copy/move/extract servers safely
 
 - **`docker/` subdirectory**: Docker build files isolated
   - Faster builds: only sends Docker files to build context
   - No pollution: world data and logs stay out of Docker layers
   - Clean: infrastructure separate from application data
 
-This structure makes it trivial to dockerize existing servers!
+This structure makes it trivial to dockerize existing servers - no file preservation needed!
 
 ## Configuration
 

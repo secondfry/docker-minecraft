@@ -12,10 +12,12 @@ services:
     container_name: minecraft-server
     restart: unless-stopped
 
-    # Mount server directory to container
+    # Mount server directory and overlay start.sh
     # Place your Minecraft server files in ./server/ directory
+    # start.sh is automatically injected at runtime (no need to preserve it)
     volumes:
       - ./server:/server
+      - ./start.sh:/server/start.sh:ro
 
     # Expose Minecraft ports
     ports:
