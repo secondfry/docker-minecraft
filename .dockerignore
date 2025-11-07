@@ -1,0 +1,35 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Docker files (no need to copy these into the image)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Documentation
+*.md
+README*
+LICENSE
+
+# IDE and editor files
+.idea
+.vscode
+.vs
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs (will be generated inside container)
+logs/
+*.log
+
+# Backups
+*.bak
+*.backup
+backups/

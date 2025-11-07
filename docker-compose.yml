@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  minecraft:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: minecraft-server
+    restart: unless-stopped
+
+    # Mount current directory as server root
+    volumes:
+      - .:/server
+
+    # Expose Minecraft ports
+    ports:
+      - "25565:25565"  # Minecraft server port
+      - "25575:25575"  # RCON port (optional)
+
+    # Environment variables (optional, can be customized)
+    environment:
+      - TZ=UTC
+
+    # Resource limits (adjust based on your system)
+    deploy:
+      resources:
+        limits:
+          memory: 8G  # Slightly higher than -Xmx to allow for overhead
+        reservations:
+          memory: 6G
+
+    # stdin_open and tty for interactive console (optional)
+    stdin_open: true
+    tty: true
+
+    # Healthcheck to monitor server status
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 25565 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
