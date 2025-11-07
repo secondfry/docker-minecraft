@@ -48,14 +48,10 @@ Features Eclipse Temurin 21 JRE on Alpine Linux with intelligent memory manageme
    cd docker-minecraft
    ```
 
-2. **Copy or move your existing server** into the `server/` directory:
+2. **Copy your existing server** into the `server/` directory:
    ```bash
    # Copy entire directory (includes hidden files like .fabric/)
    cp -a /path/to/your/existing/server/. ./server/
-
-   # Or move entire directory
-   rm -rf ./server
-   mv /path/to/your/existing/server/ ./server/
    ```
 
 3. **Start the server**:
