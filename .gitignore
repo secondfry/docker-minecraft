@@ -34,3 +34,7 @@ backups/
 # Temporary files
 *.tmp
 *.temp
+
+# Environment files (may contain sensitive configuration)
+.env
+.env.local
