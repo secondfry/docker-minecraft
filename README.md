@@ -22,7 +22,7 @@ docker run -e MAX_RAM=8G ...
 
 - ✅ **Automatic RAM detection** - reads system memory, calculates optimal heap
 - ✅ **Intelligent overhead** - reserves 1-2GB for OS based on total RAM
-- ✅ **Smart capping** - limits heap at 12GB (following Aikar's research)
+- ✅ **Reasonable defaults** - caps heap at 12GB to avoid GC issues on large systems
 - ✅ **Adaptive GC tuning** - adjusts G1GC parameters based on allocated heap size
 - ✅ **Trivial migration** - copy existing servers without file preservation
 
