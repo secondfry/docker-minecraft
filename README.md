@@ -47,7 +47,26 @@ The server **automatically detects available RAM** and configures JVM heap size 
 
 ### Manual Override
 
-#### Option 1: Environment Variable (Recommended)
+#### Option 1: Using .env File (Best Practice)
+
+Create a `.env` file from the example:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` and uncomment/set `MEMORY_GB`:
+
+```bash
+MEMORY_GB=6
+TZ=UTC
+```
+
+Then restart: `docker-compose up -d`
+
+**Why .env file?** Best practice for configuration management - keeps sensitive values out of docker-compose.yml and version control.
+
+#### Option 2: Environment Variable in docker-compose.yml
 
 Edit `docker-compose.yml` and uncomment the `MEMORY_GB` line:
 
@@ -59,7 +78,7 @@ environment:
 
 Then restart: `docker-compose up -d`
 
-#### Option 2: Edit start.sh (Persistent)
+#### Option 3: Edit start.sh (Persistent)
 
 If you upgrade your server's RAM later, edit `start.sh` lines 26-28:
 
