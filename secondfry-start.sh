@@ -36,33 +36,42 @@ trap shutdown SIGTERM SIGINT
 
 # ===== Automatic RAM Detection =====
 
+# Aikar recommends 6-10GB for most servers, rarely beneficial above 12GB
+# Reference: https://docs.papermc.io/paper/aikars-flags
+MAX_HEAP_GB=${MAX_MEMORY_GB:-12}
+
 # Allow manual override via environment variable
 if [ -n "$MEMORY_GB" ]; then
-    HEAP_SIZE="${MEMORY_GB}G"
-    echo "Using manually configured memory: ${HEAP_SIZE}"
+    HEAP_GB=$MEMORY_GB
+    echo "Using manually configured memory: ${HEAP_GB}GB"
+    HEAP_SIZE="${HEAP_GB}G"
 else
-    # Detect total available memory in MB
+    # Detect total available memory
     TOTAL_MEM_KB=$(grep MemTotal /proc/meminfo | awk '{print $2}')
     TOTAL_MEM_MB=$((TOTAL_MEM_KB / 1024))
     TOTAL_MEM_GB=$((TOTAL_MEM_MB / 1024))
 
     echo "Detected ${TOTAL_MEM_GB}GB total system memory (${TOTAL_MEM_MB}MB)"
 
-    # Calculate heap size (leave 1.5-2GB for OS overhead)
-    # Critical: Systems need overhead beyond -Xmx to prevent OOM errors
-    if [ $TOTAL_MEM_GB -ge 16 ]; then
-        # For 16GB+, leave 2GB overhead
-        HEAP_GB=$((TOTAL_MEM_GB - 2))
-    elif [ $TOTAL_MEM_GB -ge 8 ]; then
-        # For 8-15GB, leave 1.5GB overhead
-        HEAP_GB=$((TOTAL_MEM_GB - 2))
-    elif [ $TOTAL_MEM_GB -ge 6 ]; then
+    # Calculate heap size (leave overhead for OS to prevent OOM errors)
+    if [ $TOTAL_MEM_GB -lt 6 ]; then
+        echo "WARNING: Only ${TOTAL_MEM_GB}GB RAM detected. Aikar recommends minimum 6GB."
+        echo "Allocating ${TOTAL_MEM_GB}GB to heap (risky - may cause OOM)"
+        HEAP_GB=$TOTAL_MEM_GB
+    elif [ $TOTAL_MEM_GB -lt 8 ]; then
         # For 6-7GB, leave 1GB overhead
         HEAP_GB=$((TOTAL_MEM_GB - 1))
     else
-        echo "WARNING: Only ${TOTAL_MEM_GB}GB RAM detected. Minimum 6GB recommended."
-        echo "Allocating ${TOTAL_MEM_GB}GB to heap (risky - may cause OOM)"
-        HEAP_GB=$TOTAL_MEM_GB
+        # For 8GB+, leave 2GB overhead
+        HEAP_GB=$((TOTAL_MEM_GB - 2))
+    fi
+
+    # Apply upper limit to prevent GC performance issues
+    # Aikar: "more memory does not mean better performance above a certain point"
+    if [ $HEAP_GB -gt $MAX_HEAP_GB ]; then
+        echo "Capping heap at ${MAX_HEAP_GB}GB (Aikar recommends 6-10GB, rarely beneficial above 12GB)"
+        echo "Override with MAX_MEMORY_GB environment variable if needed for heavy modpacks"
+        HEAP_GB=$MAX_HEAP_GB
     fi
 
     HEAP_SIZE="${HEAP_GB}G"
