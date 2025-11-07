@@ -50,9 +50,11 @@ Features Eclipse Temurin 21 JRE on Alpine Linux with intelligent memory manageme
 
 2. **Copy or move your existing server** into the `server/` directory:
    ```bash
-   cp -a /path/to/your/existing/server/* server/
-   # or
-   mv /path/to/your/existing/server/* server/
+   # Copy contents (includes hidden files like .fabric/)
+   cp -a /path/to/your/existing/server/. server/
+
+   # Or move contents (includes hidden files)
+   shopt -s dotglob && mv /path/to/your/existing/server/* server/ && shopt -u dotglob
    ```
 
 3. **Start the server**:
