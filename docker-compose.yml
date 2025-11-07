@@ -12,9 +12,10 @@ services:
     container_name: minecraft-server
     restart: unless-stopped
 
-    # Mount current directory as server root
+    # Mount server directory to container
+    # Place your Minecraft server files in ./server/ directory
     volumes:
-      - .:/server
+      - ./server:/server
 
     # Expose Minecraft ports
     ports:

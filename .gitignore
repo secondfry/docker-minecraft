@@ -1,40 +1,6 @@
-# Minecraft Server Files
-*.jar
-eula.txt
-server.properties
-banned-ips.json
-banned-players.json
-ops.json
-usercache.json
-whitelist.json
-
-# Server directories
-world/
-world_nether/
-world_the_end/
-logs/
-crash-reports/
-libraries/
-versions/
-.fabric/
-mods/
-config/
-resourcepacks/
-plugins/
-cache/
-
-# Backups
-backups/
-*.backup
-
-# Logs
-*.log
-*.log.*
-
-# Temporary files
-*.tmp
-*.temp
-
 # Environment files (may contain sensitive configuration)
 .env
 .env.local
+
+# Server files are managed by server/.gitignore
+# All server runtime files go in server/ directory
