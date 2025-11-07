@@ -12,19 +12,23 @@ Place all your Minecraft server files in this directory:
 - ✅ Resource packs
 - ✅ Any other server files
 
-## What's Provided?
+**You can copy or move your entire server directory here without worrying about overwriting anything!**
 
-This directory contains:
-- **`start.sh`** - Startup script with automatic RAM detection and Aikar's flags
-  - You can customize this if needed, but the defaults work great
-  - Automatically detects your server JAR
-  - Automatically configures JVM based on available RAM
+## How start.sh Works
+
+The `start.sh` script is **NOT stored in this directory**. It's automatically injected at runtime by Docker from the repository root. This means:
+
+✅ **Safe to destructively copy**: `cp -a /old/server/* .` - No problem!
+✅ **Safe to move**: `mv /old/server/* .` - Works perfectly!
+✅ **Safe to extract**: `tar -xzf backup.tar.gz -C .` - Go ahead!
+
+The startup script will always be available and up-to-date.
 
 ## Quick Start
 
 ### Option 1: New Server
 
-1. Download your server JAR:
+1. Download your server JAR here:
    ```bash
    # Example for Fabric 1.21.8
    wget https://meta.fabricmc.net/v2/versions/loader/1.21.8/0.17.0/1.1.0/server/jar \
@@ -39,20 +43,14 @@ This directory contains:
 
 ### Option 2: Existing Server
 
-1. Copy or move your existing server files here:
+1. Copy your server files here (destructive copy is OK):
    ```bash
-   cp -r /path/to/old/server/* .
+   cp -a /path/to/old/server/* .
    # or
    mv /path/to/old/server/* .
    ```
 
-2. Make sure `start.sh` is kept (it's provided by this repo):
-   ```bash
-   # If you accidentally overwrote it:
-   git checkout server/start.sh
-   ```
-
-3. Start the server (from project root):
+2. Start the server (from project root):
    ```bash
    cd ..
    docker-compose up -d
@@ -60,18 +58,24 @@ This directory contains:
 
 ### Option 3: From Tarball
 
-1. Extract your server tarball here:
+1. Extract directly here:
    ```bash
    tar -xzf /path/to/server-backup.tar.gz -C .
    ```
 
-2. Ensure `start.sh` exists (provided by this repo)
-
-3. Start the server (from project root):
+2. Start the server (from project root):
    ```bash
    cd ..
    docker-compose up -d
    ```
+
+## What's Provided Automatically?
+
+- **`start.sh`** - Injected at runtime (you never see it in this directory)
+  - Automatic RAM detection
+  - Automatic server JAR detection
+  - Aikar's optimized JVM flags
+  - Always up-to-date from repository
 
 ## File Permissions
 
@@ -79,7 +83,7 @@ The container runs as UID 1000. If you encounter permission errors, see the main
 
 ## Notes
 
-- Everything in this directory (except `start.sh` and this README) is gitignored
+- **Everything in this directory is gitignored** (except this README)
 - Your server data is safe and won't be committed to version control
-- The `start.sh` script is version controlled so you get updates
-- If you customize `start.sh`, you'll need to merge updates manually
+- You can safely overwrite everything when migrating servers
+- The startup script is always provided by the repository

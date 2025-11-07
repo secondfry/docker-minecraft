@@ -1,8 +1,11 @@
 # This directory is for your Minecraft server files
 # Place your server JAR, world data, configs, and mods here
+#
+# Note: start.sh is NOT stored here - it's automatically injected by Docker
+# at runtime from the repository root. This means you can safely copy/move
+# your entire server directory without worrying about preserving files.
 
-# Keep start.sh script (provided by this repo)
-!start.sh
+# Keep only documentation
 !README.md
 !.gitignore
 
