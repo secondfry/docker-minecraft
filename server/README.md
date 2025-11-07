@@ -18,8 +18,8 @@ Place all your Minecraft server files in this directory:
 
 The `start.sh` script is **NOT stored in this directory**. It's automatically injected at runtime by Docker from the repository root. This means:
 
-✅ **Safe to destructively copy**: `cp -a /old/server/* .` - No problem!
-✅ **Safe to move**: `mv /old/server/* .` - Works perfectly!
+✅ **Safe to destructively copy**: `cp -a /old/server/. .` - No problem! (includes hidden files)
+✅ **Safe to move**: `shopt -s dotglob && mv /old/server/* .` - Works perfectly!
 ✅ **Safe to extract**: `tar -xzf backup.tar.gz -C .` - Go ahead!
 
 The startup script will always be available and up-to-date.
@@ -43,11 +43,13 @@ The startup script will always be available and up-to-date.
 
 ### Option 2: Existing Server
 
-1. Copy your server files here (destructive copy is OK):
+1. Copy your server files here (includes hidden files like .fabric/):
    ```bash
-   cp -a /path/to/old/server/* .
-   # or
-   mv /path/to/old/server/* .
+   # Copy contents including hidden files
+   cp -a /path/to/old/server/. .
+
+   # Or move contents including hidden files
+   shopt -s dotglob && mv /path/to/old/server/* . && shopt -u dotglob
    ```
 
 2. Start the server (from project root):
