@@ -1,0 +1,44 @@
+# This directory is for your Minecraft server files
+# Place your server JAR, world data, configs, and mods here
+
+# Keep start.sh script (provided by this repo)
+!start.sh
+!README.md
+!.gitignore
+
+# Ignore all Minecraft server runtime files
+*.jar
+eula.txt
+server.properties
+banned-ips.json
+banned-players.json
+ops.json
+usercache.json
+whitelist.json
+
+# Server directories
+world/
+world_nether/
+world_the_end/
+logs/
+crash-reports/
+libraries/
+versions/
+.fabric/
+mods/
+config/
+resourcepacks/
+plugins/
+cache/
+
+# Backups
+backups/
+*.backup
+
+# Logs
+*.log
+*.log.*
+
+# Temporary files
+*.tmp
+*.temp

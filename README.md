@@ -12,24 +12,75 @@ Features Eclipse Temurin 21 JRE on Alpine Linux with intelligent memory manageme
 
 ## Quick Start
 
-1. **Place your server JAR** in the root directory:
+### New Server
+
+1. **Clone or download** this repository:
    ```bash
+   git clone https://github.com/secondfry/docker-minecraft.git
+   cd docker-minecraft
+   # Or download and unzip the repository
+   ```
+
+2. **Place your server JAR** in the `server/` directory:
+   ```bash
+   cd server
    # Example for Fabric:
    wget https://meta.fabricmc.net/v2/versions/loader/1.21.8/0.17.0/1.1.0/server/jar \
      -O fabric-server-mc.1.21.8-loader.0.17.0-launcher.1.1.0.jar
+   cd ..
    ```
 
-2. **Build and start** the server (RAM auto-detected):
+3. **Start the server**:
    ```bash
    docker-compose up -d
    ```
 
-3. **View logs** to see detected configuration:
+4. **View logs**:
    ```bash
    docker-compose logs -f
    ```
 
-That's it! The server automatically detects available RAM and configures itself.
+### Existing Server (Already Have a Server Folder)
+
+1. **Clone or download** this repository:
+   ```bash
+   git clone https://github.com/secondfry/docker-minecraft.git
+   cd docker-minecraft
+   ```
+
+2. **Move your existing server** into the `server/` directory:
+   ```bash
+   mv /path/to/your/existing/server/* server/
+   # The server/ directory already contains start.sh - keep it!
+   ```
+
+3. **Start the server**:
+   ```bash
+   docker-compose up -d
+   ```
+
+### From Tarball (Server Backup)
+
+1. **Clone or download** this repository:
+   ```bash
+   git clone https://github.com/secondfry/docker-minecraft.git
+   cd docker-minecraft
+   ```
+
+2. **Extract your server tarball** into the `server/` directory:
+   ```bash
+   tar -xzf /path/to/server-backup.tar.gz -C server/
+   # Ensure start.sh exists (provided by repo)
+   ```
+
+3. **Start the server**:
+   ```bash
+   docker-compose up -d
+   ```
+
+---
+
+**That's it!** The server automatically detects available RAM and configures itself with Aikar's optimized flags.
 
 ## Memory Management
 
@@ -136,21 +187,36 @@ Only uncomment and set memory limits if you need to:
 
 ```
 .
-├── docker/                  # Docker build context (isolated from server files)
+├── docker/                  # Docker build context (isolated from server data)
 │   ├── Dockerfile          # Container image definition
 │   └── .dockerignore       # Files to exclude from build
+├── server/                  # YOUR MINECRAFT SERVER GOES HERE
+│   ├── start.sh            # Startup script (auto-detects RAM & JAR)
+│   ├── *.jar               # Your server JAR (place here)
+│   ├── world/              # World data (generated)
+│   ├── mods/               # Your mods (if using Fabric/Forge)
+│   ├── plugins/            # Your plugins (if using Paper/Spigot)
+│   ├── server.properties   # Server config (generated)
+│   └── ...                 # All other server files
 ├── docker-compose.yml      # Service orchestration
-├── start.sh                # Server startup script (auto-detects RAM & JAR)
-├── *.jar                   # Your Minecraft server JAR (auto-detected)
-└── [server files]          # World data, configs, mods, logs, etc.
+├── .env.example            # Environment variable template
+└── README.md               # This file
 ```
 
 ### Why This Structure?
 
-The `docker/` subdirectory isolates build files from server data:
-- **Faster builds**: Only Docker files sent to build context (not world data/logs)
-- **Cleaner**: Separation of infrastructure vs. server data
-- **Flexible**: Server files stay at root, easily accessible
+- **`server/` directory**: All your Minecraft files in one place
+  - Easy to understand: "put your server here"
+  - Clean separation from Docker infrastructure
+  - Easy to backup: just tar the `server/` directory
+  - Easy to migrate: move existing servers right in
+
+- **`docker/` subdirectory**: Docker build files isolated
+  - Faster builds: only sends Docker files to build context
+  - No pollution: world data and logs stay out of Docker layers
+  - Clean: infrastructure separate from application data
+
+This structure makes it trivial to dockerize existing servers!
 
 ## Configuration
 
