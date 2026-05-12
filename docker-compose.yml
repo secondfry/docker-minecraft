@@ -36,6 +36,9 @@ services:
       # Aikar recommends 6-10GB, rarely beneficial above 12GB
       # Increase only for heavy modpacks that require more RAM
       # - MAX_MEMORY_GB=${MAX_MEMORY_GB:-16}
+      # Optional: GC mode (aikar | shenandoah | shenandoah_experimental)
+      # Use shenandoah for Folia on hosts with ≥16 cores AND ≥16GB heap.
+      # - GC_MODE=${GC_MODE:-aikar}
 
     # Resource limits (OPTIONAL - commented out by default)
     #

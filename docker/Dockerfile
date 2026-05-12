@@ -1,8 +1,17 @@
 # syntax=docker/dockerfile:1
 
-# Use Eclipse Temurin 21 JRE on Alpine (not Debian)
-# Alpine provides minimal attack surface and smaller image size
-FROM eclipse-temurin:21-jre-alpine
+# Use Eclipse Temurin 25 JRE on Alpine (not Debian)
+# Alpine provides minimal attack surface and smaller image size.
+#
+# Java 25 (LTS, Sept 2025) is the latest version supported by Minecraft
+# (1.21.x runs on 21+; 26.1+ requires 25). Mainline OpenJDK 25 ships
+# stable generational Shenandoah — required for GC_MODE=shenandoah.
+# Temurin 21 lacks generational Shenandoah (dropped pre-release;
+# reintroduced experimentally in 24, stable in 25). Only Amazon
+# Corretto backported it to 21. If you must pin to 21 for plugin
+# compatibility, switch to amazoncorretto:21-alpine — otherwise stay
+# on Temurin 25.
+FROM eclipse-temurin:25-jre-alpine
 
 # Metadata labels following OCI image spec
 # See: https://github.com/opencontainers/image-spec/blob/main/annotations.md
