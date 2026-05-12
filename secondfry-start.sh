@@ -141,21 +141,6 @@ fi
 
 echo "Using server JAR: ${SERVER_JAR}"
 
-# ===== Netty IO Thread Count =====
-#
-# Paper/Folia defaults Netty event-loop threads to one per logical CPU.
-# On small hosts that means Netty alone can claim the entire core budget
-# before Folia's region scheduler, chunk system, and GC get a slice.
-#
-# For whitelist/small-player-count servers, 1–2 is plenty: Netty event
-# loops are async and a single thread can service thousands of idle
-# connections. Leave NETTY_THREADS unset to keep upstream defaults.
-NETTY_OPT=""
-if [ -n "$NETTY_THREADS" ]; then
-    echo "Capping Netty event-loop threads at ${NETTY_THREADS} (-Dio.netty.eventLoopThreads)"
-    NETTY_OPT="-Dio.netty.eventLoopThreads=${NETTY_THREADS}"
-fi
-
 # ===== Start Server =====
 
 mkdir -p logs
@@ -206,7 +191,6 @@ case "$GC_MODE" in
             -XX:ShenandoahGCMode=generational \
             -XX:ConcGCThreads=${CONC_GC_THREADS} \
             -Xlog:gc*:file=logs/gc.log:time,level,tags:filecount=${GC_LOG_FILECOUNT},filesize=4M \
-            ${NETTY_OPT} \
             -jar "${SERVER_JAR}" \
             nogui
         ;;
@@ -239,7 +223,6 @@ case "$GC_MODE" in
             -Dusing.aikars.flags=https://mcflags.emc.gs \
             -Daikars.new.flags=true \
             -Xlog:gc*:logs/gc.log:time,uptime:filecount=5,filesize=1M \
-            ${NETTY_OPT} \
             -jar "${SERVER_JAR}" \
             nogui
         ;;
