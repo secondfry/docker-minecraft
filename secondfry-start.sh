@@ -97,22 +97,25 @@ GC_MODE=${GC_MODE:-aikar}
 CPU_COUNT=$(nproc 2>/dev/null || echo 1)
 
 # ===== G1GC Configuration Based on Heap Size =====
+# Only relevant when GC_MODE=aikar; Shenandoah ignores these.
 
-# For >12GB, use adjusted G1 settings per Aikar's recommendations
-if [ ${HEAP_GB:-0} -gt 12 ]; then
-    echo "Using G1GC settings optimized for >12GB heap"
-    G1_NEW_SIZE=40
-    G1_MAX_NEW_SIZE=50
-    G1_HEAP_REGION_SIZE=16M
-    G1_RESERVE_PERCENT=15
-    G1_INIT_HEAP_OCCUPANCY=20
-else
-    echo "Using standard G1GC settings for ≤12GB heap"
-    G1_NEW_SIZE=30
-    G1_MAX_NEW_SIZE=40
-    G1_HEAP_REGION_SIZE=8M
-    G1_RESERVE_PERCENT=20
-    G1_INIT_HEAP_OCCUPANCY=15
+if [ "$GC_MODE" = "aikar" ]; then
+    # For >12GB, use adjusted G1 settings per Aikar's recommendations
+    if [ ${HEAP_GB:-0} -gt 12 ]; then
+        echo "Using G1GC settings optimized for >12GB heap"
+        G1_NEW_SIZE=40
+        G1_MAX_NEW_SIZE=50
+        G1_HEAP_REGION_SIZE=16M
+        G1_RESERVE_PERCENT=15
+        G1_INIT_HEAP_OCCUPANCY=20
+    else
+        echo "Using standard G1GC settings for ≤12GB heap"
+        G1_NEW_SIZE=30
+        G1_MAX_NEW_SIZE=40
+        G1_HEAP_REGION_SIZE=8M
+        G1_RESERVE_PERCENT=20
+        G1_INIT_HEAP_OCCUPANCY=15
+    fi
 fi
 
 # ===== Find Server JAR =====
