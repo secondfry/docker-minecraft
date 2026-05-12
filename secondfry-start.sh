@@ -78,6 +78,28 @@ else
     echo "Allocating ${HEAP_SIZE} to Java heap (leaving overhead for OS)"
 fi
 
+# ===== GC Mode Selection =====
+#
+# GC_MODE=aikar       (default) Aikar's G1GC flags. Safe for vanilla/Paper.
+# GC_MODE=shenandoah  Generational Shenandoah. Recommended for Folia on
+#                     hosts with ≥16 logical cores AND ≥16GB heap.
+# GC_MODE=shenandoah_experimental
+#                     Same flags as shenandoah, but acknowledges that
+#                     below the 16-cores / 16GB-heap threshold the
+#                     barrier overhead may exceed the pause-time savings.
+#                     Use only when /spark health shows p99 region MSPT
+#                     regressions you can't fix with chunk pregen.
+#
+# ConcGCThreads auto-scales at ~1 per 8 logical cores (Folia's region
+# scheduler reserves ~80% of cores for tick threads; GC counts against
+# that budget). ParallelGCThreads is left at the JVM default — it only
+# runs during STW and does not compete with ticking.
+
+GC_MODE=${GC_MODE:-aikar}
+
+# Detect logical CPU count for Shenandoah tuning
+CPU_COUNT=$(nproc 2>/dev/null || echo 1)
+
 # ===== G1GC Configuration Based on Heap Size =====
 
 # For >12GB, use adjusted G1 settings per Aikar's recommendations
@@ -99,9 +121,11 @@ fi
 
 # ===== Find Server JAR =====
 
-# Auto-detect server JAR (prioritize fabric, then paper, then any jar)
+# Auto-detect server JAR (prioritize fabric, then folia, then paper, then any jar)
 if [ -f fabric-server-mc.*.jar ]; then
     SERVER_JAR=$(ls -1 fabric-server-mc.*.jar | head -n1)
+elif ls folia-*.jar >/dev/null 2>&1; then
+    SERVER_JAR=$(ls -1 folia-*.jar | head -n1)
 elif [ -f paper-*.jar ]; then
     SERVER_JAR=$(ls -1 paper-*.jar | head -n1)
 elif [ -f server.jar ]; then
@@ -118,34 +142,93 @@ fi
 
 echo "Using server JAR: ${SERVER_JAR}"
 
-# ===== Start Server with Aikar's Flags =====
+# ===== Start Server =====
 
-echo "Starting Minecraft server with Aikar's optimized flags..."
-echo "Heap: ${HEAP_SIZE} | G1NewSize: ${G1_NEW_SIZE}-${G1_MAX_NEW_SIZE}%"
+mkdir -p logs
 
-exec java \
-    -Xms${HEAP_SIZE} \
-    -Xmx${HEAP_SIZE} \
-    -XX:+UseG1GC \
-    -XX:+ParallelRefProcEnabled \
-    -XX:MaxGCPauseMillis=200 \
-    -XX:+UnlockExperimentalVMOptions \
-    -XX:+DisableExplicitGC \
-    -XX:+AlwaysPreTouch \
-    -XX:G1NewSizePercent=${G1_NEW_SIZE} \
-    -XX:G1MaxNewSizePercent=${G1_MAX_NEW_SIZE} \
-    -XX:G1HeapRegionSize=${G1_HEAP_REGION_SIZE} \
-    -XX:G1ReservePercent=${G1_RESERVE_PERCENT} \
-    -XX:G1HeapWastePercent=5 \
-    -XX:G1MixedGCCountTarget=4 \
-    -XX:InitiatingHeapOccupancyPercent=${G1_INIT_HEAP_OCCUPANCY} \
-    -XX:G1MixedGCLiveThresholdPercent=90 \
-    -XX:G1RSetUpdatingPauseTimePercent=5 \
-    -XX:SurvivorRatio=32 \
-    -XX:+PerfDisableSharedMem \
-    -XX:MaxTenuringThreshold=1 \
-    -Dusing.aikars.flags=https://mcflags.emc.gs \
-    -Daikars.new.flags=true \
-    -Xlog:gc*:logs/gc.log:time,uptime:filecount=5,filesize=1M \
-    -jar "${SERVER_JAR}" \
-    nogui
+case "$GC_MODE" in
+    shenandoah|shenandoah_experimental)
+        # Generational Shenandoah for Folia. Pause-time GC that does not
+        # compete heavily with Folia's region tick threads.
+        #
+        # Viability threshold: ≥16 logical cores AND ≥16GB heap. Below
+        # that the read/write barriers cost more than the pause savings.
+        if [ "$GC_MODE" = "shenandoah" ] && { [ "$CPU_COUNT" -lt 16 ] || [ "${HEAP_GB:-0}" -lt 16 ]; }; then
+            echo "WARNING: GC_MODE=shenandoah requested but host has ${CPU_COUNT} cores"
+            echo "         and ${HEAP_GB}GB heap. Recommended threshold is ≥16/≥16GB."
+            echo "         Use GC_MODE=shenandoah_experimental to silence this warning,"
+            echo "         or stick with the default GC_MODE=aikar (G1GC)."
+        fi
+
+        # ConcGCThreads ~ 1 per 8 logical cores, minimum 1.
+        # Counts against Folia's ~80% tick-thread budget.
+        CONC_GC_THREADS=$(( CPU_COUNT / 8 ))
+        [ "$CONC_GC_THREADS" -lt 1 ] && CONC_GC_THREADS=1
+
+        # Larger heaps get more GC log rotation headroom.
+        if [ "${HEAP_GB:-0}" -ge 16 ]; then
+            GC_LOG_FILECOUNT=10
+        else
+            GC_LOG_FILECOUNT=5
+        fi
+
+        echo "Starting Minecraft server with generational Shenandoah (GC_MODE=${GC_MODE})..."
+        echo "Heap: ${HEAP_SIZE} | CPUs: ${CPU_COUNT} | ConcGCThreads: ${CONC_GC_THREADS}"
+        echo "NOTE: Heuristic flags are intentionally omitted under ShenandoahGCMode=generational"
+        echo "      (auto-tuned; manual values produce warnings)."
+        echo "NOTE: For Folia, leave paper-global.yml threaded-regions/chunk-system at"
+        echo "      defaults unless /spark health justifies tuning. See AGENTS.md."
+
+        exec java \
+            -Xms${HEAP_SIZE} \
+            -Xmx${HEAP_SIZE} \
+            -XX:+UnlockExperimentalVMOptions \
+            -XX:+AlwaysPreTouch \
+            -XX:+DisableExplicitGC \
+            -XX:+ParallelRefProcEnabled \
+            -XX:+UseShenandoahGC \
+            -XX:ShenandoahGCMode=generational \
+            -XX:ConcGCThreads=${CONC_GC_THREADS} \
+            -Xlog:gc*:file=logs/gc.log:time,level,tags:filecount=${GC_LOG_FILECOUNT},filesize=4M \
+            -jar "${SERVER_JAR}" \
+            nogui
+        ;;
+
+    aikar|"")
+        echo "Starting Minecraft server with Aikar's optimized flags (GC_MODE=aikar)..."
+        echo "Heap: ${HEAP_SIZE} | G1NewSize: ${G1_NEW_SIZE}-${G1_MAX_NEW_SIZE}%"
+
+        exec java \
+            -Xms${HEAP_SIZE} \
+            -Xmx${HEAP_SIZE} \
+            -XX:+UseG1GC \
+            -XX:+ParallelRefProcEnabled \
+            -XX:MaxGCPauseMillis=200 \
+            -XX:+UnlockExperimentalVMOptions \
+            -XX:+DisableExplicitGC \
+            -XX:+AlwaysPreTouch \
+            -XX:G1NewSizePercent=${G1_NEW_SIZE} \
+            -XX:G1MaxNewSizePercent=${G1_MAX_NEW_SIZE} \
+            -XX:G1HeapRegionSize=${G1_HEAP_REGION_SIZE} \
+            -XX:G1ReservePercent=${G1_RESERVE_PERCENT} \
+            -XX:G1HeapWastePercent=5 \
+            -XX:G1MixedGCCountTarget=4 \
+            -XX:InitiatingHeapOccupancyPercent=${G1_INIT_HEAP_OCCUPANCY} \
+            -XX:G1MixedGCLiveThresholdPercent=90 \
+            -XX:G1RSetUpdatingPauseTimePercent=5 \
+            -XX:SurvivorRatio=32 \
+            -XX:+PerfDisableSharedMem \
+            -XX:MaxTenuringThreshold=1 \
+            -Dusing.aikars.flags=https://mcflags.emc.gs \
+            -Daikars.new.flags=true \
+            -Xlog:gc*:logs/gc.log:time,uptime:filecount=5,filesize=1M \
+            -jar "${SERVER_JAR}" \
+            nogui
+        ;;
+
+    *)
+        echo "ERROR: Unknown GC_MODE='${GC_MODE}'."
+        echo "Valid values: aikar (default), shenandoah, shenandoah_experimental"
+        exit 1
+        ;;
+esac
