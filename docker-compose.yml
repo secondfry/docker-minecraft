@@ -26,19 +26,14 @@ services:
       # - "25575:25575"
 
     # Environment variables
-    # Best practice: Use .env file for configuration (see .env.example)
-    environment:
-      - TZ=UTC
-      # Optional: Override automatic RAM detection
-      # Uncomment to manually set heap size (in GB, without 'G' suffix)
-      # - MEMORY_GB=${MEMORY_GB:-6}
-      # Optional: Override maximum heap size cap (default: 12GB)
-      # Aikar recommends 6-10GB, rarely beneficial above 12GB
-      # Increase only for heavy modpacks that require more RAM
-      # - MAX_MEMORY_GB=${MAX_MEMORY_GB:-16}
-      # Optional: GC mode (aikar | shenandoah | shenandoah_experimental)
-      # Use shenandoah for Folia on hosts with ≥16 cores AND ≥16GB heap.
-      # - GC_MODE=${GC_MODE:-aikar}
+    # All configuration lives in .env (copy from .env.example).
+    # env_file injects every variable in .env as a container env var,
+    # so adding a new knob only requires editing .env — no compose edit.
+    # required: false lets the service start even without a .env file
+    # (Alpine defaults TZ to UTC when unset).
+    env_file:
+      - path: .env
+        required: false
 
     # Resource limits (OPTIONAL - commented out by default)
     #
