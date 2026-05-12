@@ -82,13 +82,9 @@ fi
 #
 # GC_MODE=aikar       (default) Aikar's G1GC flags. Safe for vanilla/Paper.
 # GC_MODE=shenandoah  Generational Shenandoah. Recommended for Folia on
-#                     hosts with ≥16 logical cores AND ≥16GB heap.
-# GC_MODE=shenandoah_experimental
-#                     Same flags as shenandoah, but acknowledges that
-#                     below the 16-cores / 16GB-heap threshold the
-#                     barrier overhead may exceed the pause-time savings.
-#                     Use only when /spark health shows p99 region MSPT
-#                     regressions you can't fix with chunk pregen.
+#                     hosts with ≥16 logical cores AND ≥16GB heap; on
+#                     smaller hosts it is marginal vs G1GC (barrier
+#                     overhead can exceed the pause-time savings).
 #
 # ConcGCThreads auto-scales at ~1 per 8 logical cores (Folia's region
 # scheduler reserves ~80% of cores for tick threads; GC counts against
@@ -147,17 +143,19 @@ echo "Using server JAR: ${SERVER_JAR}"
 mkdir -p logs
 
 case "$GC_MODE" in
-    shenandoah|shenandoah_experimental)
+    shenandoah)
         # Generational Shenandoah for Folia. Pause-time GC that does not
         # compete heavily with Folia's region tick threads.
         #
         # Viability threshold: ≥16 logical cores AND ≥16GB heap. Below
-        # that the read/write barriers cost more than the pause savings.
-        if [ "$GC_MODE" = "shenandoah" ] && { [ "$CPU_COUNT" -lt 16 ] || [ "${HEAP_GB:-0}" -lt 16 ]; }; then
-            echo "WARNING: GC_MODE=shenandoah requested but host has ${CPU_COUNT} cores"
-            echo "         and ${HEAP_GB}GB heap. Recommended threshold is ≥16/≥16GB."
-            echo "         Use GC_MODE=shenandoah_experimental to silence this warning,"
-            echo "         or stick with the default GC_MODE=aikar (G1GC)."
+        # that the read/write barriers cost more than the pause savings,
+        # so Shenandoah ends up marginal (or worse) vs G1GC. We surface
+        # this once at startup and let the operator decide.
+        if [ "$CPU_COUNT" -lt 16 ] || [ "${HEAP_GB:-0}" -lt 16 ]; then
+            echo "NOTE: Shenandoah on this host (${CPU_COUNT} cores, ${HEAP_GB}GB heap) is"
+            echo "      marginal vs G1GC — barrier overhead may exceed pause savings."
+            echo "      Only stay on shenandoah if /spark health shows p99 region MSPT"
+            echo "      regressions on G1GC that you can't fix with chunk pregen."
         fi
 
         # ConcGCThreads ~ 1 per 8 logical cores, minimum 1.
@@ -228,7 +226,7 @@ case "$GC_MODE" in
 
     *)
         echo "ERROR: Unknown GC_MODE='${GC_MODE}'."
-        echo "Valid values: aikar (default), shenandoah, shenandoah_experimental"
+        echo "Valid values: aikar (default), shenandoah"
         exit 1
         ;;
 esac
