@@ -118,28 +118,90 @@ if [ "$GC_MODE" = "aikar" ]; then
     fi
 fi
 
-# ===== Find Server JAR =====
+# ===== Find Launch Target =====
+#
+# Two supported layouts:
+#
+#   1. Single-JAR (vanilla, Paper, Fabric, Folia): launched via `-jar foo.jar`.
+#
+#   2. NeoForge / Forge modpack installers (FTB, ATLauncher, CurseForge
+#      server packs for 1.17+): no single launchable JAR. The installer
+#      drops a `libraries/.../unix_args.txt` that carries the module path,
+#      --add-opens, -DlegacyClassPath, and the BootstrapLauncher main
+#      class. We launch with `java <our-flags> @<unix_args.txt> nogui`.
+#
+# Manual override: JAVA_ARGS_FILE=/server/path/to/args.txt forces mode 2
+# regardless of detection.
 
-# Auto-detect server JAR (prioritize fabric, then folia, then paper, then any jar)
-if [ -f fabric-server-mc.*.jar ]; then
-    SERVER_JAR=$(ls -1 fabric-server-mc.*.jar | head -n1)
-elif ls folia-*.jar >/dev/null 2>&1; then
-    SERVER_JAR=$(ls -1 folia-*.jar | head -n1)
-elif [ -f paper-*.jar ]; then
-    SERVER_JAR=$(ls -1 paper-*.jar | head -n1)
-elif [ -f server.jar ]; then
-    SERVER_JAR="server.jar"
+LAUNCH_ARGS_FILE=""
+LAUNCH_MODE=""
+
+if [ -n "$JAVA_ARGS_FILE" ]; then
+    if [ ! -f "$JAVA_ARGS_FILE" ]; then
+        echo "ERROR: JAVA_ARGS_FILE=${JAVA_ARGS_FILE} does not exist."
+        exit 1
+    fi
+    LAUNCH_ARGS_FILE="$JAVA_ARGS_FILE"
+    LAUNCH_MODE="manual override (JAVA_ARGS_FILE)"
 else
-    SERVER_JAR=$(ls -1 *.jar 2>/dev/null | head -n1)
+    # NeoForge (1.20.2+): libraries/net/neoforged/neoforge/<ver>/unix_args.txt
+    for candidate in libraries/net/neoforged/neoforge/*/unix_args.txt; do
+        [ -f "$candidate" ] || continue
+        LAUNCH_ARGS_FILE="$candidate"
+        LAUNCH_MODE="NeoForge"
+        break
+    done
+
+    # Legacy Forge (1.17 - 1.20.1): libraries/net/minecraftforge/forge/<ver>/unix_args.txt
+    if [ -z "$LAUNCH_ARGS_FILE" ]; then
+        for candidate in libraries/net/minecraftforge/forge/*/unix_args.txt; do
+            [ -f "$candidate" ] || continue
+            LAUNCH_ARGS_FILE="$candidate"
+            LAUNCH_MODE="Forge"
+            break
+        done
+    fi
 fi
 
-if [ -z "$SERVER_JAR" ]; then
-    echo "ERROR: No server JAR file found!"
-    echo "Please place your Minecraft server JAR in this directory."
-    exit 1
-fi
+if [ -n "$LAUNCH_ARGS_FILE" ]; then
+    echo "Detected ${LAUNCH_MODE} modpack layout."
+    echo "Using launch args file: ${LAUNCH_ARGS_FILE}"
 
-echo "Using server JAR: ${SERVER_JAR}"
+    # FTB / NeoForge installers ship a user_jvm_args.txt with a hardcoded
+    # -Xmx (commonly 4G or 8G). We deliberately ignore it — letting it win
+    # would defeat the auto-RAM detection that is the whole point of this
+    # repo. We pass our own -Xms/-Xmx and Aikar's flags ahead of @args.
+    if [ -f user_jvm_args.txt ]; then
+        echo "⚠️  Ignoring user_jvm_args.txt — auto-RAM + Aikar's flags take precedence."
+        echo "    Set MEMORY_GB in .env to force a specific heap size."
+    fi
+
+    LAUNCH_ARGS=( "@${LAUNCH_ARGS_FILE}" )
+else
+    # Auto-detect server JAR (prioritize fabric, then folia, then paper, then any jar)
+    if [ -f fabric-server-mc.*.jar ]; then
+        SERVER_JAR=$(ls -1 fabric-server-mc.*.jar | head -n1)
+    elif ls folia-*.jar >/dev/null 2>&1; then
+        SERVER_JAR=$(ls -1 folia-*.jar | head -n1)
+    elif [ -f paper-*.jar ]; then
+        SERVER_JAR=$(ls -1 paper-*.jar | head -n1)
+    elif [ -f server.jar ]; then
+        SERVER_JAR="server.jar"
+    else
+        SERVER_JAR=$(ls -1 *.jar 2>/dev/null | head -n1)
+    fi
+
+    if [ -z "$SERVER_JAR" ]; then
+        echo "ERROR: No server JAR file found!"
+        echo "Please place your Minecraft server JAR in this directory,"
+        echo "or use a NeoForge/Forge modpack installer that produces"
+        echo "libraries/.../unix_args.txt."
+        exit 1
+    fi
+
+    echo "Using server JAR: ${SERVER_JAR}"
+    LAUNCH_ARGS=( -jar "${SERVER_JAR}" )
+fi
 
 # ===== Start Server =====
 
@@ -191,7 +253,7 @@ case "$GC_MODE" in
             -XX:ShenandoahGCMode=generational \
             -XX:ConcGCThreads=${CONC_GC_THREADS} \
             -Xlog:gc*:file=logs/gc.log:time,level,tags:filecount=${GC_LOG_FILECOUNT},filesize=4M \
-            -jar "${SERVER_JAR}" \
+            "${LAUNCH_ARGS[@]}" \
             nogui
         ;;
 
@@ -223,7 +285,7 @@ case "$GC_MODE" in
             -Dusing.aikars.flags=https://mcflags.emc.gs \
             -Daikars.new.flags=true \
             -Xlog:gc*:logs/gc.log:time,uptime:filecount=5,filesize=1M \
-            -jar "${SERVER_JAR}" \
+            "${LAUNCH_ARGS[@]}" \
             nogui
         ;;
 

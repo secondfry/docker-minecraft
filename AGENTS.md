@@ -172,6 +172,57 @@ cp -a /path/to/your/existing/server/. ./server/
 
 **Why**: Single source of truth, easier to maintain.
 
+## Modpack Installer Layout (FTB / NeoForge / Forge)
+
+### The Problem
+
+Minecraft 1.17 introduced Java's module system into modded servers. NeoForge
+(and legacy Forge from 1.17 onward) no longer ship a single launchable JAR.
+Modpack installers (FTB, CurseForge server packs, ATLauncher) instead produce:
+
+```
+server/
+├── run.sh                              # `java @user_jvm_args.txt @libraries/.../unix_args.txt nogui "$@"`
+├── user_jvm_args.txt                   # hardcoded -Xmx (e.g. -Xmx8192M)
+└── libraries/net/neoforged/neoforge/<version>/unix_args.txt
+                                        # -p <module-path>, --add-opens,
+                                        # -DlegacyClassPath=…, BootstrapLauncher main
+```
+
+The original `secondfry-start.sh` searched for `*.jar` in the server root and
+launched via `java <aikar-flags> -jar <jar> nogui`. For FTB packs there is no
+such JAR — the launch target is the `@args.txt` files.
+
+### Solution: Detect args file, override user_jvm_args.txt
+
+`secondfry-start.sh` probes for `libraries/net/neoforged/neoforge/*/unix_args.txt`
+and `libraries/net/minecraftforge/forge/*/unix_args.txt` **before** falling back
+to JAR detection. If found, the launch becomes:
+
+```
+java <our auto-RAM Xms/Xmx> <Aikar's flags> @<unix_args.txt> nogui
+```
+
+Notes on the design:
+
+- **We ignore `user_jvm_args.txt` on purpose.** It almost always hardcodes
+  `-Xmx`, which defeats the whole point of this repo (automatic RAM detection).
+  We log a warning when we override it so the operator knows.
+- **We re-use the existing Aikar / Shenandoah flag blocks unchanged.** Only the
+  final positional argument to `java` switches between `-jar foo.jar` and
+  `@libraries/.../unix_args.txt`. Both modes share the same heap and GC tuning.
+- **Manual escape hatch: `JAVA_ARGS_FILE`.** If a future modpack format puts
+  the args file somewhere we don't probe, the operator can set
+  `JAVA_ARGS_FILE=/server/path/to/args.txt` in `.env` without editing the
+  script.
+
+### Why not just `exec ./run.sh`?
+
+Tempting (one-line fix), but it hands launch control back to the pack's
+`user_jvm_args.txt`. The user gets whatever heap the modpack author guessed,
+not the heap our auto-detection picked for the actual host. That's exactly
+the manual-configuration problem this repo exists to remove.
+
 ## Memory Management
 
 ### Automatic RAM Detection
