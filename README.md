@@ -124,6 +124,37 @@ Just run `docker-compose up -d` and it works.
    docker-compose up -d
    ```
 
+### FTB / NeoForge / Forge Modpack Installer
+
+Modpack installers (FTB, CurseForge server packs, ATLauncher) for Minecraft 1.17+
+do **not** produce a single launchable JAR. Instead they generate a `run.sh`
+that invokes Java with `@libraries/net/neoforged/neoforge/<version>/unix_args.txt`
+(or the equivalent path under `net/minecraftforge/forge/` for legacy Forge).
+
+`secondfry-start.sh` detects this layout automatically — no extra configuration:
+
+1. **Clone this repository** and `cd` into it.
+2. **Move the installer output** into `server/`:
+   ```bash
+   mv /path/to/modpack-server/ ./server/
+   ```
+   You should see a `libraries/net/neoforged/neoforge/<version>/unix_args.txt`
+   (or `net/minecraftforge/forge/<version>/unix_args.txt`) somewhere under
+   `./server/`.
+3. **Start the server**:
+   ```bash
+   docker-compose up -d
+   ```
+
+**What happens under the hood:** the startup script finds the `unix_args.txt`,
+prepends our auto-RAM `-Xms/-Xmx` and Aikar's flags, and launches via
+`java <flags> @<unix_args.txt> nogui`. The pack's bundled `user_jvm_args.txt`
+(which usually hardcodes `-Xmx8192M`) is intentionally ignored so RAM
+auto-detection wins — set `MEMORY_GB` in `.env` if you need to override.
+
+**Manual override:** if your modpack uses a non-standard path, set
+`JAVA_ARGS_FILE=/server/path/to/unix_args.txt` in `.env`.
+
 ### From Tarball (Server Backup)
 
 1. **Clone or download** this repository:
@@ -324,15 +355,21 @@ RCON (Remote Console) is disabled by default as it can be a security risk if exp
 
 **Security Warning**: Only expose RCON if you need it, and always use a strong password. Consider using SSH tunneling instead of exposing RCON publicly.
 
-### Server JAR Auto-Detection
+### Launch Target Auto-Detection
 
-The startup script automatically finds your server JAR in this priority order:
-1. `fabric-server-mc.*.jar`
-2. `paper-*.jar`
-3. `server.jar`
-4. First `*.jar` file found
+The startup script picks the launch target in this order:
 
-**No manual configuration needed!** Just drop your JAR in the root directory.
+1. `JAVA_ARGS_FILE` env var (manual override → `java @<file>`)
+2. `libraries/net/neoforged/neoforge/*/unix_args.txt` (NeoForge / FTB / 1.20.2+)
+3. `libraries/net/minecraftforge/forge/*/unix_args.txt` (legacy Forge, 1.17 – 1.20.1)
+4. `fabric-server-mc.*.jar`
+5. `folia-*.jar`
+6. `paper-*.jar`
+7. `server.jar`
+8. First `*.jar` file found
+
+**No manual configuration needed!** Drop your JAR in `server/`, or extract a
+modpack installer's output there — either layout works.
 
 ### File Permissions and Volume Mounts
 
